@@ -2,6 +2,8 @@ package com.example.newsapp.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.AsyncListDiffer
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.newsapp.R
 import com.example.newsapp.data.models.Article
@@ -9,23 +11,34 @@ import com.example.newsapp.data.models.Article
 import com.example.newsapp.databinding.ItemNewsViewBinding
 import com.squareup.picasso.Picasso
 
-class NewsAdapter(private var mList: List<Article>) : RecyclerView.Adapter<NewsAdapter.MyViewHolder>() {
+class NewsAdapter() : RecyclerView.Adapter<NewsAdapter.MyViewHolder>() {
+
+    private val diffCallback = object : DiffUtil.ItemCallback<Article>() {
+        override fun areItemsTheSame(oldItem: Article, newItem: Article): Boolean {
+            return oldItem.url == newItem.url
+        }
+
+        override fun areContentsTheSame(oldItem: Article, newItem: Article): Boolean {
+            return oldItem.hashCode() == newItem.hashCode()
+        }
+
+    }
+
+    private val differ = AsyncListDiffer(this, diffCallback)
+
+    fun submitList(list: List<Article>) = differ.submitList(list)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
         return MyViewHolder(ItemNewsViewBinding.inflate(LayoutInflater.from(parent.context)))
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-        holder.bind(mList[position])
+        val article = differ.currentList[position]
+        holder.bind(article)
     }
 
     override fun getItemCount(): Int {
-        return mList.size
-    }
-
-    fun setData(newList: List<Article>) {
-        mList = newList
-        notifyDataSetChanged()
+        return differ.currentList.size
     }
 
 

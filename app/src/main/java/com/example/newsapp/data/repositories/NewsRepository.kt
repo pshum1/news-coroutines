@@ -6,25 +6,31 @@ import androidx.lifecycle.MutableLiveData
 import com.example.newsapp.data.models.Article
 import com.example.newsapp.data.models.NewsResponse
 import com.example.newsapp.data.networks.NewsAPI
+import com.example.testingapplication.other.Resource
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.lang.Exception
+import javax.inject.Inject
 
-class NewsRepository {
+class NewsRepository @Inject constructor(
+    private val api: NewsAPI
+) {
 
-    suspend fun getAllNews(): LiveData<NewsResponse> {
-
-        val api = NewsAPI()
-        val newsResponse = MutableLiveData<NewsResponse>()
-
-        val result = api.getNews()
-        if(result.isSuccessful) {
-            Log.d("responseNews", result.body().toString() )
-            newsResponse.value = result.body()
-        } else {
-            Log.d("responseNews", "Error connecting to API" )
+    suspend fun getAllNews() : Resource<NewsResponse> {
+        Log.d("NEWSAPP", "YOU GOT TO API CALL")
+        return try {
+            val response = api.getNews()
+            if (response.isSuccessful) {
+                response.body().let {
+                    return@let Resource.success(it)
+                } ?: Resource.error("An unknown error occurred", null)
+            } else {
+                Resource.error("An unknown error occurred", null)
+            }
+        } catch (e: Exception) {
+            Resource.error("Couldn't reach server. Check your internet connection", null)
         }
-
-        return newsResponse
     }
+
 }

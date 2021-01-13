@@ -1,39 +1,34 @@
-package com.example.newsapp.ui
+package com.example.newsapp.ui.activities
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.widget.Adapter
-import android.widget.LinearLayout
-import androidx.lifecycle.LifecycleOwner
+import androidx.activity.viewModels
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.newsapp.R
 import com.example.newsapp.adapters.NewsAdapter
 import com.example.newsapp.data.models.Article
 import com.example.newsapp.databinding.ActivityMainBinding
 import com.example.newsapp.ui.viewmodels.MainViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    lateinit var viewModel: MainViewModel
+    private val viewModel: MainViewModel by viewModels()
 
     lateinit var binding: ActivityMainBinding
     lateinit var newsAdapter: NewsAdapter
-    lateinit var list: List<Article>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 //        setContentView(R.layout.activity_main)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
 
         setupRecyclerView()
 
@@ -42,28 +37,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun init() {
-        CoroutineScope(Dispatchers.IO).launch {
-            var result = viewModel.getNewsDataAsync().await()
+//        CoroutineScope(Dispatchers.IO).launch {
+//            var result = viewModel.getNewsDataAsync().await()
+//
+//            list = result.value!!.articles
+//            Log.d("newsResponse", result.value!!.articles.toString())
+//
+//            setData()
+//
+//        }
+        viewModel.getNewsData()
+        viewModel.newsResponse.observe(this, Observer {
+            it.data?.articles?.let { it1 -> newsAdapter.submitList(it1) }
+        })
 
-            list = result.value!!.articles
-            Log.d("newsResponse", result.value!!.articles.toString())
-
-            setData()
-
-        }
-
-
-    }
-
-    private fun setData() {
-        CoroutineScope(Dispatchers.Main).launch {
-            newsAdapter.setData(list)
-        }
     }
 
     private fun setupRecyclerView() = binding.recyclerView.apply {
-        list = arrayListOf()
-        newsAdapter = NewsAdapter(list)
+        newsAdapter = NewsAdapter()
         adapter = newsAdapter
         layoutManager = LinearLayoutManager(this@MainActivity)
     }
